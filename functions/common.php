@@ -1,5 +1,5 @@
 <?php
-defined( 'ABSPATH' ) || die( 'Cheatin\' uh?' );
+defined( 'ABSPATH' ) || die( 'Cheatin’ uh?' );
 
 /**
  * Check if Imagify Tools is activated on the network.
@@ -27,7 +27,7 @@ function imagify_tools_is_active_for_network() {
 	}
 
 	if ( ! function_exists( 'is_plugin_active_for_network' ) ) {
-		require_once( ABSPATH . 'wp-admin/includes/plugin.php' );
+		require_once ABSPATH . 'wp-admin/includes/plugin.php';
 	}
 
 	$is = is_plugin_active_for_network( plugin_basename( IMAGIFY_TOOLS_FILE ) );
@@ -95,9 +95,11 @@ function imagify_tools_compress_data( $data ) {
 	$bsf = '64_' . $bsf;
 	$bsf = 'base' . $bsf;
 
-	return $bsf// Hey.
-		( $gz// Hoy.
+	// phpcs:disable PEAR.Functions.FunctionCallSignature.Indent, PEAR.Functions.FunctionCallSignature.SpaceBeforeOpenBracket, PEAR.Functions.FunctionCallSignature.ContentAfterOpenBracket, PEAR.Functions.FunctionCallSignature.CloseBracketLine, WordPress.PHP.DiscouragedPHPFunctions.serialize_serialize
+	return $bsf
+		( $gz
 			( serialize( $data ) ) );
+	// phpcs:enable PEAR.Functions.FunctionCallSignature.Indent, PEAR.Functions.FunctionCallSignature.SpaceBeforeOpenBracket, PEAR.Functions.FunctionCallSignature.ContentAfterOpenBracket, PEAR.Functions.FunctionCallSignature.CloseBracketLine, WordPress.PHP.DiscouragedPHPFunctions.serialize_serialize
 }
 
 
@@ -125,7 +127,7 @@ function imagify_tools_decompress_data( $data ) {
 	$bsf = '64_' . $bsf;
 	$bsf = 'base' . $bsf;
 
-	$data_tmp = $bsf// Hey.
+	$data_tmp = $bsf// phpcs:ignore PEAR.Functions.FunctionCallSignature.SpaceBeforeOpenBracket
 		( $data );
 
 	if ( ! $data_tmp ) {
@@ -133,7 +135,7 @@ function imagify_tools_decompress_data( $data ) {
 	}
 
 	$data     = $data_tmp;
-	$data_tmp = $gz// Hoy.
+	$data_tmp = $gz// phpcs:ignore PEAR.Functions.FunctionCallSignature.SpaceBeforeOpenBracket
 		( $data );
 
 	if ( ! $data_tmp ) {
@@ -186,7 +188,7 @@ function imagify_tools_get_ip() {
 	);
 
 	foreach ( $keys as $key ) {
-		$ip = isset( $_SERVER[ $key ] ) ? wp_unslash( $_SERVER[ $key ] ) : null; // WPCS: input var okay, sanitization ok.
+		$ip = isset( $_SERVER[ $key ] ) ? wp_unslash( $_SERVER[ $key ] ) : null; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
 		if ( ! $ip ) {
 			continue;

@@ -1,5 +1,5 @@
 <?php
-defined( 'ABSPATH' ) || die( 'Cheatin\' uh?' );
+defined( 'ABSPATH' ) || die( 'Cheatin’ uh?' );
 
 /**
  * Log class.
@@ -16,7 +16,7 @@ class IMGT_Log {
 	 *
 	 * @var string
 	 */
-	const VERSION = '1.0';
+	const VERSION = '1.0.1';
 
 	/**
 	 * A DATETIME formated date.
@@ -107,13 +107,16 @@ class IMGT_Log {
 			$process_data = false;
 		}
 
-		$args = array_merge( array(
-			'time'       => '',
-			'order'      => 0,
-			'type'       => '',
-			'target'     => '',
-			'data'       => array(),
-		), $args );
+		$args = array_merge(
+			array(
+				'time'   => '',
+				'order'  => 0,
+				'type'   => '',
+				'target' => '',
+				'data'   => array(),
+			),
+			$args
+		);
 
 		// Extract the subtype from the type.
 		$args['type'] = self::split_subtype( $args['type'] );
@@ -278,6 +281,7 @@ class IMGT_Log {
 					}
 					// Replace the `style` attributes by `class` attributes.
 					$data = preg_replace( '@<span style="color: #([0-9A-F]+)">@', '<span class="imgt-code-color imgt-code-color-$1">', $data );
+
 					$this->data[ $key ] = "<pre><code>$data</code></pre>";
 				} elseif ( strlen( $data ) > 50 ) {
 					// 50 seems to be a good limit between short and long code.
@@ -341,7 +345,7 @@ class IMGT_Log {
 
 		$ajax_url = preg_quote( admin_url( 'admin-ajax.php' ), '@' );
 
-		if ( isset( $args['method'], $args['body']['action'] ) && 'POST' === strtoupper( $args['method'] ) && preg_match( '@^imagify_@', $args['body']['action'] ) && preg_match( '@^' . $ajax_url . '@', $url ) ) {
+		if ( isset( $args['method'], $args['body']['action'] ) && 'POST' === strtoupper( $args['method'] ) && 0 === strpos( $args['body']['action'], 'imagify_' ) && preg_match( '@^' . $ajax_url . '@', $url ) ) {
 			return compact( 'url', 'args', 'response' );
 		}
 
@@ -409,7 +413,7 @@ class IMGT_Log {
 			if ( preg_match( '/^<pre>(?:<code>)?(.*)(?:<\/code>)?<\/pre>$/', $value, $matches ) ) {
 				$matches[1]   = explode( "\n", $matches[1] );
 				$matches[1]   = reset( $matches[1] );
-				$data[ $key ] = '<code>' . strip_tags( $matches[1] ) . '</code>';
+				$data[ $key ] = '<code>' . wp_strip_all_tags( $matches[1] ) . '</code>';
 			}
 		}
 

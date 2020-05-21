@@ -1,5 +1,5 @@
 <?php
-defined( 'ABSPATH' ) || die( 'Cheatin\' uh?' );
+defined( 'ABSPATH' ) || die( 'Cheatin’ uh?' );
 
 /**
  * Plugin main class.
@@ -14,7 +14,7 @@ class Imagify_Tools {
 	 *
 	 * @var string
 	 */
-	const VERSION = '1.0';
+	const VERSION = '1.1';
 
 	/**
 	 * Path to the plugin file.
@@ -49,7 +49,7 @@ class Imagify_Tools {
 	 *
 	 * @var object
 	 */
-	protected static $_instance;
+	protected static $instance;
 
 	/**
 	 * The constructor.
@@ -68,11 +68,11 @@ class Imagify_Tools {
 	 * @return object Main instance.
 	 */
 	public static function get_instance() {
-		if ( ! isset( self::$_instance ) ) {
-			self::$_instance = new self();
+		if ( ! isset( self::$instance ) ) {
+			self::$instance = new self();
 		}
 
-		return self::$_instance;
+		return self::$instance;
 	}
 
 	/**
@@ -82,7 +82,7 @@ class Imagify_Tools {
 	 * @author Grégory Viguier
 	 */
 	public static function delete_instance() {
-		unset( self::$_instance );
+		unset( self::$instance );
 	}
 
 	/**
@@ -92,6 +92,21 @@ class Imagify_Tools {
 	 * @author Grégory Viguier
 	 */
 	public function init() {
+		if ( ! self::is_muplugin() ) {
+			register_activation_hook( self::get_plugin_file(), array( $this, 'activation' ) );
+		}
+
+		add_action( 'plugins_loaded', array( $this, 'load_plugin' ), 20 );
+		add_action( 'admin_init',     array( $this, 'maybe_redirect' ), 2 );
+	}
+
+	/**
+	 * Load everything.
+	 *
+	 * @since  1.0.5
+	 * @author Grégory Viguier
+	 */
+	public function load_plugin() {
 		static $done = false;
 
 		if ( $done ) {
@@ -116,12 +131,15 @@ class Imagify_Tools {
 
 		// Init classes.
 		IMGT_Logs::get_instance()->init();
-		IMGT_Hooks::get_instance()->init();
 
-		if ( is_admin() && ! wp_doing_ajax() ) {
-			IMGT_Admin_Pages::get_instance()->init();
+		if ( is_admin() ) {
 			IMGT_Admin_Post::get_instance()->init();
-			IMGT_Attachments_Metas::get_instance()->init();
+			IMGT_Nextgen_Gallery::get_instance()->init();
+
+			if ( ! wp_doing_ajax() ) {
+				IMGT_Admin_Pages::get_instance()->init();
+				IMGT_Attachments_Metas::get_instance()->init();
+			}
 		}
 
 		/**
@@ -131,6 +149,61 @@ class Imagify_Tools {
 		 * @author Grégory Viguier
 		 */
 		do_action( 'imagify_tools_loaded' );
+	}
+
+	/**
+	 * What to do on plugin activation.
+	 *
+	 * @since  1.0.5
+	 * @access public
+	 * @author Grégory Viguier
+	 */
+	public function activation() {
+		// Set the library mode to list.
+		update_user_option( get_current_user_id(), 'media_library_mode', 'list' );
+
+		// Redirect to the plugin's page.
+		if ( defined( 'DOING_AJAX' ) && DOING_AJAX ) {
+			return;
+		}
+
+		set_transient( 'imgt_activation', 1, 60 );
+	}
+
+	/**
+	 * Redirect the user on plugin activation.
+	 *
+	 * @since  1.0.5
+	 * @access public
+	 * @author Grégory Viguier
+	 */
+	public function maybe_redirect() {
+		global $pagenow;
+
+		if ( 'plugins.php' !== $pagenow ) {
+			return;
+		}
+
+		if ( ! current_user_can( imagify_tools_get_capacity() ) ) {
+			return;
+		}
+
+		if ( ! get_transient( 'imgt_activation' ) ) {
+			return;
+		}
+
+		delete_transient( 'imgt_activation' );
+
+		$admin_url = 'admin.php?page=' . IMGT_Admin_Pages::MAIN_PAGE_SLUG;
+
+		if ( is_network_admin() ) {
+			$admin_url = network_admin_url( $admin_url );
+		} else {
+			$admin_url = admin_url( $admin_url );
+		}
+
+		wp_safe_redirect( esc_url_raw( $admin_url ) );
+		die();
 	}
 
 	/**
@@ -207,11 +280,13 @@ class Imagify_Tools {
 		self::$plugin_file = $plugin_file;
 		self::$plugin_dir  = wp_normalize_path( IMAGIFY_TOOLS_PATH );
 
-		arsort( $wp_plugin_paths );
+		if ( $wp_plugin_paths ) {
+			arsort( $wp_plugin_paths );
 
-		foreach ( $wp_plugin_paths as $dir => $realdir ) {
-			if ( strpos( self::$plugin_file, $realdir ) === 0 ) {
-				self::$plugin_file = $dir . substr( self::$plugin_file, strlen( $realdir ) );
+			foreach ( $wp_plugin_paths as $dir => $realdir ) {
+				if ( strpos( self::$plugin_file, $realdir ) === 0 ) {
+					self::$plugin_file = $dir . substr( self::$plugin_file, strlen( $realdir ) );
+				}
 			}
 		}
 
@@ -243,10 +318,11 @@ class Imagify_Tools {
 			'IMGT_Admin_View_Main'   => 1,
 			'IMGT_Admin_View_Logs'   => 1,
 			'IMGT_Attachments_Metas' => 1,
-			'IMGT_Hooks'             => 1,
 			'IMGT_Logs'              => 1,
 			'IMGT_Logs_List_Table'   => 1,
 			'IMGT_Log'               => 1,
+			'IMGT_Nextgen_Gallery'   => 1,
+			'IMGT_Tools'             => 1,
 		);
 
 		if ( isset( $classes[ $class ] ) ) {
